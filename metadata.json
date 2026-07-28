@@ -1,0 +1,6 @@
+{
+  "name": "PrintSheet Pro",
+  "description": "ابزار هوشمند چیدمان اتوماتیک و بسته‌بندی عکس در برگه‌های A3, A4, A5 و A6 بدون تغییر نسبت ابعاد، همراه با علامت برش، خروجی PDF/ZIP و چاپ مستقیم",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
