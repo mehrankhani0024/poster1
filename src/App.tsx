@@ -23,7 +23,7 @@ export default function App() {
     gapMM: 0,
     marginMM: 0,
     showCropMarks: false,
-    showSafeMargin: true,
+    showSafeMargin: false,
     safeMarginMM: 3,
     showRulers: true,
     defaultFitMode: 'cover',
@@ -354,7 +354,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen bg-slate-100 flex flex-col font-['Vazirmatn',sans-serif] ${
+      className={`min-h-screen w-full max-w-full overflow-x-hidden bg-slate-100 flex flex-col font-['Vazirmatn',sans-serif] ${
         settings.lang === 'fa' ? 'rtl' : 'ltr'
       }`}
       dir={settings.lang === 'fa' ? 'rtl' : 'ltr'}

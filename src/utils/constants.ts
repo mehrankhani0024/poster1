@@ -44,18 +44,45 @@ export function getPaperDimensions(settings: AppSettings): { widthMM: number; he
  */
 export function calculateGridDimensions(settings: AppSettings): { cols: number; rows: number } {
   const paper = getPaperDimensions(settings);
-  const paperW = paper.widthMM;
-  const paperH = paper.heightMM;
+  const isLandscape = settings.orientation === 'landscape';
+
+  // Explicit helper for known combinations
+  if (settings.layoutPreset !== 'CUSTOM_GRID') {
+    if (settings.paperSize === 'A3') {
+      if (settings.targetPhotoPreset === 'A6' || settings.layoutPreset === '8_A6_ON_A3') {
+        return isLandscape ? { cols: 4, rows: 2 } : { cols: 2, rows: 4 };
+      }
+      if (settings.targetPhotoPreset === 'A5' || settings.layoutPreset === '4_A5_ON_A3') {
+        return { cols: 2, rows: 2 };
+      }
+      if (settings.targetPhotoPreset === 'A4' || settings.layoutPreset === '2_A4_ON_A3') {
+        return isLandscape ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
+      }
+    } else if (settings.paperSize === 'A4') {
+      if (settings.targetPhotoPreset === 'A6' || settings.layoutPreset === '4_A6_ON_A4') {
+        return { cols: 2, rows: 2 };
+      }
+      if (settings.targetPhotoPreset === 'A5' || settings.layoutPreset === '2_A5_ON_A4') {
+        return isLandscape ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
+      }
+      if (settings.targetPhotoPreset === 'A4') {
+        return { cols: 1, rows: 1 };
+      }
+      if (settings.layoutPreset === '9_3.5x5_ON_A4') {
+        return { cols: 3, rows: 3 };
+      }
+    }
+  }
 
   switch (settings.layoutPreset) {
     case '4_A5_ON_A3':
-      return settings.orientation === 'landscape' ? { cols: 2, rows: 2 } : { cols: 2, rows: 2 };
+      return { cols: 2, rows: 2 };
     case '2_A4_ON_A3':
-      return settings.orientation === 'landscape' ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
+      return isLandscape ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
     case '8_A6_ON_A3':
-      return settings.orientation === 'landscape' ? { cols: 4, rows: 2 } : { cols: 2, rows: 4 };
+      return isLandscape ? { cols: 4, rows: 2 } : { cols: 2, rows: 4 };
     case '2_A5_ON_A4':
-      return settings.orientation === 'landscape' ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
+      return isLandscape ? { cols: 2, rows: 1 } : { cols: 1, rows: 2 };
     case '4_A6_ON_A4':
       return { cols: 2, rows: 2 };
     case '9_3.5x5_ON_A4':
@@ -67,6 +94,9 @@ export function calculateGridDimensions(settings: AppSettings): { cols: number; 
       };
     case 'AUTO':
     default: {
+      const paperW = paper.widthMM;
+      const paperH = paper.heightMM;
+
       // Auto compute how many slots fit on paper based on target photo size
       let photoW = 100;
       let photoH = 150;

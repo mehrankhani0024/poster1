@@ -323,19 +323,6 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                         : 'border-slate-300 hover:border-indigo-400 z-10'
                     }`}
                   >
-                    {/* Safe Margin Boundary Line (3mm) */}
-                    {settings.showSafeMargin && (
-                      <div
-                        className="absolute pointer-events-none border border-dashed border-emerald-500/60 z-20"
-                        style={{
-                          left: `${safeMarginPx}px`,
-                          top: `${safeMarginPx}px`,
-                          right: `${safeMarginPx}px`,
-                          bottom: `${safeMarginPx}px`,
-                        }}
-                      />
-                    )}
-
                     {/* Corner Crop Marks Visual Lines */}
                     {settings.showCropMarks && (
                       <>
@@ -419,7 +406,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
       </div>
 
       {/* Bottom Multi-Page Navigation & PNG Export Bar */}
-      <div className="no-print bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-4 shrink-0 z-30 w-full overflow-x-auto no-scrollbar">
+      <div className="no-print bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 sm:px-4 py-2 flex items-center justify-between gap-1 sm:gap-3 shrink-0 z-30 w-full max-w-full overflow-hidden">
         {/* Page Switcher */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
@@ -427,14 +414,13 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             disabled={currentPageIndex === 0}
             className="p-1 sm:p-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition-all shrink-0"
             id="btn-prev-page"
+            title="صفحه قبل"
           >
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
-          <span className="text-[11px] sm:text-xs font-bold text-slate-800 px-1 sm:px-2 min-w-[70px] sm:min-w-[100px] text-center whitespace-nowrap">
-            {t.pageIndicator
-              .replace('{current}', (currentPageIndex + 1).toString())
-              .replace('{total}', pages.length.toString())}
+          <span className="text-[11px] sm:text-xs font-bold text-slate-800 px-1 sm:px-2 min-w-[60px] sm:min-w-[90px] text-center whitespace-nowrap">
+            {currentPageIndex + 1} / {pages.length}
           </span>
 
           <button
@@ -442,12 +428,13 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             disabled={currentPageIndex >= pages.length - 1}
             className="p-1 sm:p-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition-all shrink-0"
             id="btn-next-page"
+            title="صفحه بعد"
           >
             <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
-        {/* Page Thumbnails List */}
+        {/* Page Thumbnails List (Desktop) */}
         <div className="hidden md:flex items-center gap-1.5 overflow-x-auto max-w-xs md:max-w-md py-0.5 shrink-0">
           {pages.map((p, idx) => (
             <button
@@ -470,7 +457,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             <button
               onClick={onExportPng}
               disabled={isExportingPng}
-              className="px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-bold rounded-lg flex items-center gap-1 sm:gap-1.5 shadow-xs transition-all disabled:opacity-50 shrink-0"
+              className="px-2 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition-all disabled:opacity-50 shrink-0"
               title={t.exportPng}
             >
               {isExportingPng ? (
@@ -506,12 +493,13 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
 
           <button
             onClick={onAddPage}
-            className="px-2.5 sm:px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] sm:text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition-all shrink-0"
+            className="px-2 sm:px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] sm:text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition-all shrink-0"
             id="btn-add-page"
+            title={t.addPage}
           >
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">{t.addPage}</span>
-            <span className="sm:hidden">جدید</span>
+            <span className="sm:hidden">برگه</span>
           </button>
         </div>
       </div>
