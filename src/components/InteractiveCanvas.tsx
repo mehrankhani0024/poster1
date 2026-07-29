@@ -61,6 +61,80 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   const [startPanPos, setStartPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [touchDistance, setTouchDistance] = useState<number | null>(null);
 
+  // Dragging image inside slot state
+  const [draggingSlotState, setDraggingSlotState] = useState<{
+    slotId: string;
+    startX: number;
+    startY: number;
+    initialOffsetX: number;
+    initialOffsetY: number;
+    slotWidthPx: number;
+    slotHeightPx: number;
+    zoom: number;
+    rotation: number;
+  } | null>(null);
+
+  // Handle global mouse/touch movement when dragging an image inside a slot
+  useEffect(() => {
+    if (!draggingSlotState) return;
+
+    const handlePointerMove = (clientX: number, clientY: number) => {
+      const deltaX = clientX - draggingSlotState.startX;
+      const deltaY = clientY - draggingSlotState.startY;
+
+      let effDeltaX = deltaX;
+      let effDeltaY = deltaY;
+
+      if (draggingSlotState.rotation === 90) {
+        effDeltaX = deltaY;
+        effDeltaY = -deltaX;
+      } else if (draggingSlotState.rotation === 180) {
+        effDeltaX = -deltaX;
+        effDeltaY = -deltaY;
+      } else if (draggingSlotState.rotation === 270) {
+        effDeltaX = -deltaY;
+        effDeltaY = deltaX;
+      }
+
+      const percentX = (effDeltaX / (draggingSlotState.slotWidthPx * draggingSlotState.zoom)) * 100;
+      const percentY = (effDeltaY / (draggingSlotState.slotHeightPx * draggingSlotState.zoom)) * 100;
+
+      const newOffsetX = Math.max(-150, Math.min(150, draggingSlotState.initialOffsetX + percentX));
+      const newOffsetY = Math.max(-150, Math.min(150, draggingSlotState.initialOffsetY + percentY));
+
+      onUpdateSlot(draggingSlotState.slotId, {
+        offsetX: Math.round(newOffsetX * 10) / 10,
+        offsetY: Math.round(newOffsetY * 10) / 10,
+      });
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      handlePointerMove(e.clientX, e.clientY);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const onPointerUp = () => {
+      setDraggingSlotState(null);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onPointerUp);
+    };
+  }, [draggingSlotState, onUpdateSlot]);
+
   const t = translations[settings.lang];
   const currentPage = pages[currentPageIndex] || pages[0];
   const paperDim = getPaperDimensions(settings);
@@ -333,12 +407,51 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                       </>
                     )}
 
-                    {/* Image Rendering with Zero Aspect Distortion */}
+                    {/* Image Rendering with Zero Aspect Distortion & Mouse Dragging */}
                     {assignedImage ? (
-                      <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+                      <div
+                        onMouseDown={(e) => {
+                          if (e.button !== 0) return;
+                          e.stopPropagation();
+                          onSelectSlot(slot);
+                          setDraggingSlotState({
+                            slotId: slot.id,
+                            startX: e.clientX,
+                            startY: e.clientY,
+                            initialOffsetX: slot.offsetX || 0,
+                            initialOffsetY: slot.offsetY || 0,
+                            slotWidthPx,
+                            slotHeightPx,
+                            zoom: slot.zoom || 1.0,
+                            rotation: slot.rotation || 0,
+                          });
+                        }}
+                        onTouchStart={(e) => {
+                          if (e.touches.length !== 1) return;
+                          e.stopPropagation();
+                          onSelectSlot(slot);
+                          const touch = e.touches[0];
+                          setDraggingSlotState({
+                            slotId: slot.id,
+                            startX: touch.clientX,
+                            startY: touch.clientY,
+                            initialOffsetX: slot.offsetX || 0,
+                            initialOffsetY: slot.offsetY || 0,
+                            slotWidthPx,
+                            slotHeightPx,
+                            zoom: slot.zoom || 1.0,
+                            rotation: slot.rotation || 0,
+                          });
+                        }}
+                        className={`w-full h-full relative overflow-hidden flex items-center justify-center select-none ${
+                          draggingSlotState?.slotId === slot.id ? 'cursor-grabbing' : 'cursor-grab'
+                        }`}
+                        title={settings.lang === 'fa' ? 'برای جابه‌جایی عکس، دراگ کنید' : 'Drag to adjust photo position'}
+                      >
                         <img
                           src={assignedImage.dataUrl}
                           alt={assignedImage.name}
+                          draggable={false}
                           style={{
                             maxWidth: 'none',
                             maxHeight: 'none',
@@ -346,20 +459,22 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                             height: slot.fitMode === 'cover' ? '100%' : 'auto',
                             objectFit: slot.fitMode === 'cover' ? 'cover' : 'contain',
                             transform: `rotate(${slot.rotation}deg) scale(${slot.zoom}) translate(${slot.offsetX}%, ${slot.offsetY}%)`,
-                            transition: 'transform 0.15s ease-out',
+                            transition: draggingSlotState?.slotId === slot.id ? 'none' : 'transform 0.15s ease-out',
                           }}
                           className="pointer-events-none select-none max-w-full max-h-full"
                         />
 
                         {/* Quick Slot Overlay Toolbar on Hover */}
-                        <div className="no-print absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1 z-30">
+                        <div className="no-print absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1 z-30 pointer-events-none">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               const newRot = ((slot.rotation + 90) % 360) as any;
                               onUpdateSlot(slot.id, { rotation: newRot });
                             }}
-                            className="p-1.5 bg-white text-slate-800 rounded-lg shadow-sm hover:bg-slate-100 transition-transform hover:scale-105"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            className="p-1.5 bg-white text-slate-800 rounded-lg shadow-sm hover:bg-slate-100 transition-transform hover:scale-105 pointer-events-auto"
                             title={t.rotate90}
                           >
                             <RotateCw className="w-3.5 h-3.5" />
@@ -371,7 +486,9 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                               const newFit = slot.fitMode === 'cover' ? 'contain' : 'cover';
                               onUpdateSlot(slot.id, { fitMode: newFit });
                             }}
-                            className="p-1.5 bg-white text-slate-800 rounded-lg shadow-sm hover:bg-slate-100 transition-transform hover:scale-105 text-[10px] font-bold"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            className="p-1.5 bg-white text-slate-800 rounded-lg shadow-sm hover:bg-slate-100 transition-transform hover:scale-105 text-[10px] font-bold pointer-events-auto"
                             title="تغییر حالت پر کردن / جاگیری"
                           >
                             {slot.fitMode === 'cover' ? 'Cover' : 'Fit'}
@@ -382,7 +499,9 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                               e.stopPropagation();
                               onSelectSlot(slot);
                             }}
-                            className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-transform hover:scale-105"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-transform hover:scale-105 pointer-events-auto"
                             title={t.settings}
                           >
                             <Sliders className="w-3.5 h-3.5" />

@@ -4,7 +4,8 @@ import {
   LayoutGrid, 
   Upload, 
   Trash2, 
-  RotateCw, 
+  RotateCw,
+  RotateCcw, 
   ZoomIn, 
   Check, 
   Layers, 
@@ -606,33 +607,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
 
                   {/* Offset X / Y Shift */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="text-[10px] font-semibold text-slate-600">{t.offsetXLabel}</span>
-                      <input
-                        type="range"
-                        min={-50}
-                        max={50}
-                        value={selectedSlot.offsetX}
-                        onChange={(e) =>
-                          onUpdateSelectedSlot({ offsetX: Number(e.target.value) })
-                        }
-                        className="w-full accent-indigo-600"
-                      />
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-600">{t.offsetXLabel}</span>
+                        <input
+                          type="range"
+                          min={-100}
+                          max={100}
+                          value={selectedSlot.offsetX}
+                          onChange={(e) =>
+                            onUpdateSelectedSlot({ offsetX: Number(e.target.value) })
+                          }
+                          className="w-full accent-indigo-600"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-600">{t.offsetYLabel}</span>
+                        <input
+                          type="range"
+                          min={-100}
+                          max={100}
+                          value={selectedSlot.offsetY}
+                          onChange={(e) =>
+                            onUpdateSelectedSlot({ offsetY: Number(e.target.value) })
+                          }
+                          className="w-full accent-indigo-600"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[10px] font-semibold text-slate-600">{t.offsetYLabel}</span>
-                      <input
-                        type="range"
-                        min={-50}
-                        max={50}
-                        value={selectedSlot.offsetY}
-                        onChange={(e) =>
-                          onUpdateSelectedSlot({ offsetY: Number(e.target.value) })
-                        }
-                        className="w-full accent-indigo-600"
-                      />
-                    </div>
+
+                    <button
+                      onClick={() => onUpdateSelectedSlot({ offsetX: 0, offsetY: 0 })}
+                      className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[11px] rounded-lg flex items-center justify-center gap-1 transition-all"
+                    >
+                      <RotateCcw className="w-3 h-3 text-slate-500" />
+                      <span>{settings.lang === 'fa' ? 'وسط‌چین کردن موقعیت عکس' : 'Center photo position'}</span>
+                    </button>
                   </div>
 
                   {/* Duplicate to next slots */}
